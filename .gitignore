@@ -1,0 +1,3 @@
+#./view/imgsファイルをgit管理から除外
+./view/imgs/
+
