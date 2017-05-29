@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#! /usr/bin/env ruby
 #
 require 'csv'
 require 'tel_formatter'
@@ -70,12 +70,15 @@ class Jotform
 
   def initialize
     @table = CSV.read("jot_input.csv", headers: true, encoding: "UTF-8")
-    @pic_cells = ["びゅ〜画像1","びゅ〜画像2","びゅ〜画像3"] 
+    # @pic_cells = ["びゅ〜画像1","びゅ〜画像2","びゅ〜画像3"] 
+    @pic_cells = ["会社の広告画像"] 
     @money_cells = ["月額給与 (下限)","月額給与 (上限)","日額給与 (下限)","日額給与 (上限)","通勤手当上限金額","時給 (下限)","時給 (上限)"]
     @multi_select_cells = ["定休日","各種条件","必要資格"]
     @telephone_cells = ["電話番号(固定)","電話番号(携帯)","FAX番号"]
     @time_cells = ["営業時間","勤務時間A","勤務時間B","勤務時間C"]
-    @introduce_cells = ["びゅ〜紹介文章1","びゅ〜紹介文章2","応募資格詳細","待遇詳細","お仕事内容詳細"]
+    # @introduce_cells = ["びゅ〜紹介文章1","びゅ〜紹介文章2","応募資格詳細","待遇詳細","お仕事内容詳細"]
+    @introduce_cells = ["応募資格詳細","待遇詳細","お仕事内容詳細"]
+    @require_skill = ["必要資格"]
     @custom_header = []
     FileUtils.mkdir_p("view") unless FileTest.exist?("view")
   end
@@ -111,6 +114,7 @@ class Jotform
     del_totaltime
     del_returns
     add_postalcode_hyphen
+    set_no_comment
   end
 
 
@@ -121,10 +125,10 @@ class Jotform
         if ! (row[pos].to_s.empty?)then
           dc = DataConvertor.new
           temp = dc.convert_chars(jpg_name(row[pos]))
-          # row[pos] = "./img/" + temp
+          row[pos] = ".:imgs:" + temp
           # row[pos] = ":Users:kunio:Desktop:view_test:img:" + temp
           # row[pos] = "mainSSD:Users:kunio:Desktop:view_test:img:" + temp
-          row[pos] =  temp
+          #row[pos] =  temp
         end
       }
     }
@@ -191,6 +195,17 @@ class Jotform
       }
     }
   end
+
+  def set_no_comment
+    dc = DataConvertor.new
+    @table.each{|row|
+      @require_skill.each{|pos|
+        if(row[pos] == "")then
+          row[pos] = "特になし"
+        end
+      }
+    }
+  end
   
 
   # indesignで画像の参照用カラムのヘッダーには接頭辞として"@"が必要なので、これを追加
@@ -202,10 +217,10 @@ class Jotform
     @table.headers.each{|s| @custom_header.push(s)
     }
 
-    # idx.each{|n|
-    #   @custom_header[n] = "@" + @custom_header[n]
-    # }
-    # p @custom_header
+    idx.each{|n|
+      @custom_header[n] = "@" + @custom_header[n]
+      p @custom_header[n]
+    }
 
   end
 
@@ -253,3 +268,6 @@ jf.make_dl_list
 jf.rewrite_cells
 # jf.show_pic_cell
 jf.out_csv
+
+`nkf -s --overwrite ./view/dat.csv`
+# `mkdir ./view/imgs; cd ./view/imgs; wget -i ../picList.txt`
